@@ -1,5 +1,5 @@
 import React from 'react';
-import { Notification } from './types';
+import { AppNotification } from './types';
 import { Bell, Check, AlertCircle, Clock } from 'lucide-react';
 
 interface NotificationPanelProps {
