@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router } from 'react-router-dom';
-import Dashboard from './components/Dashboard';
-import TrainingDetail from './components/TrainingDetail';
-import NewTrainingModal from './components/NewTrainingModal';
-import CalendarView from './components/CalendarView';
-import MySessionsView from './components/MySessionsView';
-import NotificationPanel from './components/NotificationPanel';
+import Dashboard from './Dashboard';
+import TrainingDetail from './TrainingDetail';
+import NewTrainingModal from './NewTrainingModal';
+import CalendarView from './CalendarView';
+import MySessionsView from './MySessionsView';
+import NotificationPanel from './NotificationPanel';
 import { TrainingSession, TrainingStatus, Notification } from './types';
 import { requestNotificationPermission, checkNotifications } from './services/notificationService';
 import { LayoutDashboard, Calendar as CalendarIcon, Home, Briefcase, Bell } from 'lucide-react';
