@@ -1,4 +1,4 @@
-import { TrainingSession, TrainingStatus, Notification } from '../types';
+import { TrainingSession, TrainingStatus, Notification } from './types';
 
 // Default start time if not specified (based on PDF template)
 const DEFAULT_START_TIME = '09:30';
