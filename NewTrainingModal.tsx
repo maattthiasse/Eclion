@@ -1,8 +1,6 @@
-import React, { useState, useRef } from 'react';
-import { Upload, Loader2, AlertCircle, FileText } from 'lucide-react';
-import { parseConventionDocument } from './geminiService';
-import { TrainingSession, TrainingStatus, Participant } from './types';
-import { v4 as uuidv4 } from 'uuid';
+import React, { useState } from 'react';
+import { X, Upload, FileText } from 'lucide-react';
+import { TrainingSession, TrainingStatus } from './types';
 
 interface NewTrainingModalProps {
   onClose: () => void;
@@ -10,122 +8,154 @@ interface NewTrainingModalProps {
 }
 
 const NewTrainingModal: React.FC<NewTrainingModalProps> = ({ onClose, onCreate }) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [companyName, setCompanyName] = useState('');
+  const [trainingName, setTrainingName] = useState('');
+  const [date, setDate] = useState('');
+  const [trainerName, setTrainerName] = useState('Rali El kohen');
+  const [pdfContent, setPdfContent] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string>('');
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type === 'application/pdf') {
+      setFileName(file.name);
+      
+      // Convertir le PDF en Base64 pour le stocker localement
       const reader = new FileReader();
-      reader.onloadend = async () => {
+      reader.onloadend = () => {
         const base64String = reader.result as string;
-        // Remove data URL prefix for API
-        const base64Data = base64String.split(',')[1];
-        
-        try {
-          const result = await parseConventionDocument(base64Data, file.type);
-          
-          const newSessions: TrainingSession[] = [];
-          
-          // Handle case where AI returns empty dates array or malformed data
-          const datesToProcess = (result.dates && result.dates.length > 0) ? result.dates : [new Date().toISOString().split('T')[0]];
-
-          // Create a session for each date found in the convention (Multi-day training support)
-          datesToProcess.forEach((dateStr, index) => {
-             const suffix = datesToProcess.length > 1 ? ` (Jour ${index + 1})` : '';
-             
-             newSessions.push({
-                id: uuidv4(),
-                companyName: result.companyName,
-                trainingName: result.trainingName + suffix,
-                date: dateStr, // Expecting YYYY-MM-DD from AI
-                status: TrainingStatus.SCHEDULED,
-                trainerName: 'Rali El kohen', 
-                participants: result.participants.map(p => ({
-                  id: uuidv4(),
-                  name: p.name,
-                  email: p.email,
-                  role: p.role,
-                  hasSigned: false,
-                  isPresent: false
-                }))
-             });
-          });
-
-          onCreate(newSessions);
-        } catch (err) {
-            console.error(err);
-          setError("Impossible d'analyser le document. Vérifiez que l'image est claire.");
-        } finally {
-          setIsLoading(false);
-        }
+        setPdfContent(base64String);
       };
       reader.readAsDataURL(file);
-    } catch (e) {
-      setError("Erreur lors de la lecture du fichier.");
-      setIsLoading(false);
+    } else {
+      alert("Veuillez sélectionner un fichier PDF valide.");
     }
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Création de la nouvelle session avec le PDF
+    const newSession: TrainingSession = {
+      id: Date.now().toString(),
+      companyName,
+      trainingName,
+      date,
+      status: TrainingStatus.SCHEDULED,
+      trainerName,
+      participants: [],
+      pdfContent: pdfContent || undefined // On ajoute le PDF ici
+    };
+
+    onCreate([newSession]);
+    onClose();
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative transition-colors duration-300">
-        
-        {/* Decorative Header */}
-        <div className="bg-gradient-to-r from-indigo-600 to-blue-500 p-6 text-center">
-            <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-                <FileText className="text-white" size={32} />
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+        <div className="bg-indigo-600 px-6 py-4 flex justify-between items-center">
+          <h2 className="text-xl font-bold text-white">Nouvelle Formation</h2>
+          <button onClick={onClose} className="text-indigo-100 hover:text-white transition-colors">
+            <X size={24} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Entreprise</label>
+            <input
+              type="text"
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              placeholder="Ex: TotalEnergies"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Intitulé de la formation</label>
+            <input
+              type="text"
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              value={trainingName}
+              onChange={(e) => setTrainingName(e.target.value)}
+              placeholder="Ex: Sécurité Incendie"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+            <input
+              type="date"
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Formateur</label>
+            <input
+              type="text"
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              value={trainerName}
+              onChange={(e) => setTrainerName(e.target.value)}
+            />
+          </div>
+
+          {/* Zone d'upload PDF */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Programme / Support (PDF)</label>
+            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:bg-gray-50 transition-colors relative cursor-pointer">
+              <input
+                type="file"
+                accept=".pdf"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                onChange={handleFileChange}
+              />
+              <div className="space-y-1 text-center">
+                {fileName ? (
+                  <div className="flex flex-col items-center text-indigo-600">
+                    <FileText size={32} />
+                    <p className="text-sm font-medium">{fileName}</p>
+                    <p className="text-xs text-green-600">Fichier prêt à l'envoi</p>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                    <div className="flex text-sm text-gray-600">
+                      <span className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none">
+                        Téléverser un fichier
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500">PDF jusqu'à 5MB</p>
+                  </>
+                )}
+              </div>
             </div>
-            <h2 className="text-2xl font-bold text-white">Nouvelle Formation</h2>
-            <p className="text-blue-100 text-sm mt-1">Importez votre convention pour commencer</p>
-        </div>
+          </div>
 
-        <div className="p-8">
-            {isLoading ? (
-                <div className="flex flex-col items-center justify-center py-8">
-                    <Loader2 size={48} className="text-indigo-600 animate-spin mb-4" />
-                    <p className="text-gray-600 font-medium">Analyse IA en cours...</p>
-                    <p className="text-gray-400 text-sm mt-2">Extraction des dates et participants</p>
-                </div>
-            ) : (
-                <div className="space-y-6">
-                    <div 
-                        onClick={() => fileInputRef.current?.click()}
-                        className="border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition-all group"
-                    >
-                        <Upload className="text-gray-400 group-hover:text-indigo-500 mb-3 transition-colors" size={40} />
-                        <p className="text-gray-600 font-medium text-center">Cliquez pour importer la Convention</p>
-                        <p className="text-gray-400 text-xs mt-2 text-center">(PDF, JPG, PNG)</p>
-                        <input 
-                            type="file" 
-                            ref={fileInputRef} 
-                            onChange={handleFileChange} 
-                            className="hidden" 
-                            accept="image/*,application/pdf"
-                        />
-                    </div>
-
-                    {error && (
-                        <div className="flex items-start space-x-2 bg-red-50 text-red-600 p-3 rounded-lg text-sm">
-                            <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
-                            <span>{error}</span>
-                        </div>
-                    )}
-
-                    <div className="text-center">
-                        <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-sm font-medium">
-                            Annuler
-                        </button>
-                    </div>
-                </div>
-            )}
-        </div>
+          <div className="pt-4 flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-indigo-700"
+            >
+              Créer la session
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
