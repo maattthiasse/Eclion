@@ -7,7 +7,7 @@ import CalendarView from './CalendarView';
 import MySessionsView from './MySessionsView';
 import NotificationPanel from './NotificationPanel';
 import { TrainingSession, TrainingStatus, Notification } from './types';
-import { requestNotificationPermission, checkNotifications } from './services/notificationService';
+import { requestNotificationPermission, checkNotifications } from './notificationService';
 import { LayoutDashboard, Calendar as CalendarIcon, Home, Briefcase, Bell } from 'lucide-react';
 
 // Mock initial data
