@@ -1,6 +1,6 @@
 import React from 'react';
 import { Square, CheckSquare } from 'lucide-react';
-import { Participant } from '../types';
+import { Participant } from './types';
 
 interface AttendanceSheetTemplateProps {
   sessionDate: string;
