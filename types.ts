@@ -34,7 +34,7 @@ export interface AIAnalysisResult {
   participants: { name: string; email: string; role: string }[];
 }
 
-export interface Notification {
+export interface AppNotification {
   id: string;
   title: string;
   message: string;
