@@ -25,7 +25,6 @@ export interface TrainingSession {
   participants: Participant[];
   trainerName: string;
   trainerSignature?: string; // Base64 signature of the trainer
-  pdfContent?: string; // 
 }
 
 export interface AIAnalysisResult {
