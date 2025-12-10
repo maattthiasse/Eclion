@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, Loader2, AlertCircle, FileText } from 'lucide-react';
-import { parseConventionDocument } from '../geminiService';
+import { parseConventionDocument } from './geminiService';
 import { TrainingSession, TrainingStatus, Participant } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
