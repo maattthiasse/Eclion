@@ -3,7 +3,7 @@ import { TrainingSession, Participant, TrainingStatus } from './types';
 import SignaturePad from './SignaturePad';
 import CertificateTemplate from './CertificateTemplate';
 import AttendanceSheetTemplate from './AttendanceSheetTemplate';
-import { generateTrainingObjectives } from '../services/geminiService';
+import { generateTrainingObjectives } from '../geminiService';
 import { v4 as uuidv4 } from 'uuid';
 import { 
   ArrowLeft, 
