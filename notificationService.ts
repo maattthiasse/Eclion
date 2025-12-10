@@ -1,4 +1,4 @@
-import { TrainingSession, TrainingStatus, Notification } from './types';
+import { TrainingSession, TrainingStatus, AppNotification } from './types';
 
 // Default start time if not specified (based on PDF template)
 const DEFAULT_START_TIME = '09:30';
@@ -44,7 +44,7 @@ export const checkNotifications = (trainings: TrainingSession[], currentNotifica
       const notifId = `pre-${training.id}`;
       // Avoid duplicate notifications
       if (!currentNotifications.some(n => n.id === notifId)) {
-        const notif: Notification = {
+        const notif: AppNotification = {
           id: notifId,
           title: 'Formation imminente',
           message: `La formation "${training.trainingName}" commence dans 15 min. Pensez à faire signer les participants.`,
@@ -72,7 +72,7 @@ export const checkNotifications = (trainings: TrainingSession[], currentNotifica
     if (now >= dayAfterTraining && training.status !== TrainingStatus.COMPLETED) {
       const notifId = `post-${training.id}`;
       if (!currentNotifications.some(n => n.id === notifId)) {
-        const notif: Notification = {
+        const notif: AppNotification = {
           id: notifId,
           title: 'Session non clôturée',
           message: `Oubli de signature ? La session "${training.trainingName}" du ${formatDate(training.date)} n'est pas clôturée par le formateur.`,
