@@ -6,7 +6,7 @@ import NewTrainingModal from './NewTrainingModal';
 import CalendarView from './CalendarView';
 import MySessionsView from './MySessionsView';
 import NotificationPanel from './NotificationPanel';
-import { TrainingSession, TrainingStatus, Notification } from './types';
+import { TrainingSession, TrainingStatus, AppNotification } from './types';
 import { requestNotificationPermission, checkNotifications } from './notificationService';
 import { LayoutDashboard, Calendar as CalendarIcon, Home, Briefcase, Bell } from 'lucide-react';
 
@@ -51,7 +51,7 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
   
   // Notification State
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
 
   // Initial Permission Request and periodic check
