@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrainingSession, TrainingStatus } from '../types';
+import { TrainingSession, TrainingStatus } from './types';
 import { Calendar, MapPin, ChevronRight, Briefcase, BookOpen } from 'lucide-react';
 
 interface MySessionsViewProps {
