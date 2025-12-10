@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, User, MapPin } from 'lucide-react';
-import { TrainingSession } from '../types';
+import { TrainingSession } from './types';
 
 interface CalendarViewProps {
   trainings: TrainingSession[];
