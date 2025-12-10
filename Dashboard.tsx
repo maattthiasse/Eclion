@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrainingSession, TrainingStatus } from '../types';
+import { TrainingSession, TrainingStatus } from './types';
 import { Calendar, Users, FileCheck, ArrowRight, Plus, Clock } from 'lucide-react';
 
 interface DashboardProps {
