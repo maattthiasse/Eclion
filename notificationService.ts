@@ -23,8 +23,8 @@ export const sendSystemNotification = (title: string, body: string) => {
   }
 };
 
-export const checkNotifications = (trainings: TrainingSession[], currentNotifications: Notification[]): Notification[] => {
-  const newNotifications: Notification[] = [];
+export const checkNotifications = (trainings: TrainingSession[], currentNotifications: AppNotification[]): AppNotification[] => {
+  const newNotifications: AppNotification[] = [];
   const now = new Date();
 
   trainings.forEach(training => {
