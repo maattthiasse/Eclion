@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrainingSession, Participant, TrainingStatus } from '../types';
+import { TrainingSession, Participant, TrainingStatus } from './types';
 import SignaturePad from './SignaturePad';
 import CertificateTemplate from './CertificateTemplate';
 import AttendanceSheetTemplate from './AttendanceSheetTemplate';
