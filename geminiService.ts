@@ -1,36 +1,27 @@
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 
-// Définition du type (on le laisse ici pour éviter les erreurs)
 export interface AIAnalysisResult {
   companyName: string;
   trainingName: string;
   dates: string[];
-  participants: {
-    name: string;
-    email?: string;
-    role?: string;
-  }[];
+  participants: { name: string; email?: string; role?: string; }[];
 }
 
-// --- ZONE DE DIAGNOSTIC (DÉBUT) ---
-console.log("--- TEST CLÉ API ---");
-// Cette ligne va afficher dans la console si la clé est vue ou non
-const envKey = import.meta.env.VITE_GEMINI_API_KEY;
-console.log("État de la clé :", envKey ? "✅ PRÉSENTE (Commence par " + envKey.substring(0, 5) + "...)" : "❌ ABSENTE / VIDE");
-// --- ZONE DE DIAGNOSTIC (FIN) ---
+// --- ZONE DE DIAGNOSTIC ---
+const rawKey = import.meta.env.VITE_GEMINI_API_KEY;
+console.log("🔍 DIAGNOSTIC CLÉ API :");
+if (!rawKey) {
+    console.error("❌ LA CLÉ EST VIDE ! Vérifiez Vercel et le redéploiement.");
+} else {
+    console.log("✅ LA CLÉ EST PRÉSENTE (Début : " + rawKey.substring(0, 5) + "...)");
+}
+// --------------------------
 
-
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-
-// Initialisation de Gemini
+const API_KEY = rawKey || '';
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 export const parseConventionDocument = async (base64Image: string, mimeType: string): Promise<AIAnalysisResult> => {
-  // Petite sécurité supplémentaire
-  if (!API_KEY) {
-    console.error("⛔ ERREUR BLOQUANTE : La clé API est vide. Le code ne peut pas contacter Google.");
-    throw new Error("API Key is missing in the code");
-  }
+  if (!API_KEY) throw new Error("API Key is missing (Bloqué par le code)");
 
   try {
     const model = genAI.getGenerativeModel({
@@ -42,19 +33,12 @@ export const parseConventionDocument = async (base64Image: string, mimeType: str
           properties: {
             companyName: { type: SchemaType.STRING },
             trainingName: { type: SchemaType.STRING },
-            dates: { 
-              type: SchemaType.ARRAY,
-              items: { type: SchemaType.STRING }
-            },
+            dates: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
             participants: {
               type: SchemaType.ARRAY,
               items: {
                 type: SchemaType.OBJECT,
-                properties: {
-                  name: { type: SchemaType.STRING },
-                  email: { type: SchemaType.STRING },
-                  role: { type: SchemaType.STRING },
-                },
+                properties: { name: { type: SchemaType.STRING }, email: { type: SchemaType.STRING }, role: { type: SchemaType.STRING } },
               },
             },
           },
@@ -63,24 +47,14 @@ export const parseConventionDocument = async (base64Image: string, mimeType: str
       },
     });
 
-    const cleanBase64 = base64Image.includes('base64,') 
-      ? base64Image.split('base64,')[1] 
-      : base64Image;
+    const cleanBase64 = base64Image.includes('base64,') ? base64Image.split('base64,')[1] : base64Image;
 
     const result = await model.generateContent([
-      "Analyse ce document. Extrait le nom de l'entreprise (via SIRET), le sujet, les dates (YYYY-MM-DD), et les participants.",
-      {
-        inlineData: {
-          data: cleanBase64,
-          mimeType: mimeType,
-        },
-      },
+      "Analyse ce document convention. Extrait Entreprise, Sujet, Dates (YYYY-MM-DD) et Participants.",
+      { inlineData: { data: cleanBase64, mimeType: mimeType } },
     ]);
 
-    const responseText = result.response.text();
-    console.log("✅ Réponse Gemini reçue :", responseText); // Log de succès
-    return JSON.parse(responseText) as AIAnalysisResult;
-
+    return JSON.parse(result.response.text()) as AIAnalysisResult;
   } catch (error) {
     console.error("❌ Erreur Gemini:", error);
     throw error;
@@ -88,6 +62,5 @@ export const parseConventionDocument = async (base64Image: string, mimeType: str
 };
 
 export const generateTrainingObjectives = async (trainingName: string): Promise<string[]> => {
-  // ... (vous pouvez laisser le reste de cette fonction tel quel ou la supprimer si inutilisée)
-  return ["Objectif 1", "Objectif 2"]; 
+    return ["Objectif 1", "Objectif 2"];
 };
