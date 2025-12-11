@@ -1,49 +1,47 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import { AIAnalysisResult } from "./types";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 
-const apiKey = process.env.API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
+// Définition directe du type pour éviter les erreurs d'import
+export interface AIAnalysisResult {
+  companyName: string;
+  trainingName: string;
+  dates: string[];
+  participants: {
+    name: string;
+    email?: string;
+    role?: string;
+  }[];
+}
 
-/**
- * Parses a convention document (image) to extract training details and participant list.
- */
+// CORRECTION MAJEURE : On utilise import.meta.env pour Vite (pas process.env)
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+
+// On initialise le SDK standard
+const genAI = new GoogleGenerativeAI(API_KEY);
+
 export const parseConventionDocument = async (base64Image: string, mimeType: string): Promise<AIAnalysisResult> => {
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: {
-        parts: [
-          {
-            inlineData: {
-              data: base64Image,
-              mimeType: mimeType,
-            },
-          },
-          {
-            text: "Analyse ce document de convention de formation. Extrait le nom de l'entreprise cliente : aide-toi du numéro de SIRET présent sur le document pour identifier la bonne société juridique et ne pas confondre avec l'organisme de formation (DFM). Extrait également le sujet/nom de la formation, les dates (format YYYY-MM-DD IMPERATIF, ex: 2023-10-27), et la liste des participants (nom, email fictif si absent, et role/poste si présent). Si la formation dure plusieurs jours, retourne toutes les dates dans le tableau.",
-          },
-        ],
-      },
-      config: {
+    // Utilisation du modèle stable 1.5 Flash
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+      generationConfig: {
         responseMimeType: "application/json",
         responseSchema: {
-          type: Type.OBJECT,
+          type: SchemaType.OBJECT,
           properties: {
-            companyName: { type: Type.STRING },
-            trainingName: { type: Type.STRING },
+            companyName: { type: SchemaType.STRING },
+            trainingName: { type: SchemaType.STRING },
             dates: { 
-              type: Type.ARRAY,
-              items: { type: Type.STRING },
-              description: "Liste des dates au format YYYY-MM-DD"
+              type: SchemaType.ARRAY,
+              items: { type: SchemaType.STRING }
             },
             participants: {
-              type: Type.ARRAY,
+              type: SchemaType.ARRAY,
               items: {
-                type: Type.OBJECT,
+                type: SchemaType.OBJECT,
                 properties: {
-                  name: { type: Type.STRING },
-                  email: { type: Type.STRING },
-                  role: { type: Type.STRING },
+                  name: { type: SchemaType.STRING },
+                  email: { type: SchemaType.STRING },
+                  role: { type: SchemaType.STRING },
                 },
               },
             },
@@ -53,49 +51,50 @@ export const parseConventionDocument = async (base64Image: string, mimeType: str
       },
     });
 
-    if (response.text) {
-      return JSON.parse(response.text) as AIAnalysisResult;
-    }
-    throw new Error("No data returned from AI");
+    // Nettoyage du format base64
+    const cleanBase64 = base64Image.includes('base64,') 
+      ? base64Image.split('base64,')[1] 
+      : base64Image;
+
+    const result = await model.generateContent([
+      "Analyse ce document. Extrait le nom de l'entreprise (via SIRET), le sujet, les dates (YYYY-MM-DD), et les participants.",
+      {
+        inlineData: {
+          data: cleanBase64,
+          mimeType: mimeType,
+        },
+      },
+    ]);
+
+    const responseText = result.response.text();
+    return JSON.parse(responseText) as AIAnalysisResult;
+
   } catch (error) {
-    console.error("Error parsing convention:", error);
+    console.error("Erreur Gemini:", error);
     throw error;
   }
 };
 
-/**
- * Generates learning objectives for the certificate based on the training topic.
- */
 export const generateTrainingObjectives = async (trainingName: string): Promise<string[]> => {
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `Génère une liste de 4 objectifs pédagogiques concis (bullet points) pour une attestation de formation intitulée : "${trainingName}". Réponds uniquement avec un tableau JSON de chaînes de caractères.`,
-      config: {
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+      generationConfig: {
         responseMimeType: "application/json",
         responseSchema: {
-          type: Type.ARRAY,
-          items: { type: Type.STRING }
+          type: SchemaType.ARRAY,
+          items: { type: SchemaType.STRING }
         }
       }
     });
+
+    const result = await model.generateContent(
+      `Génère 4 objectifs pédagogiques courts pour la formation : "${trainingName}".`
+    );
     
-    if (response.text) {
-        return JSON.parse(response.text) as string[];
-    }
-    return [
-        "Comprendre les fondamentaux du sujet",
-        "Maîtriser les outils principaux",
-        "Appliquer les connaissances en situation réelle",
-        "Évaluer les risques et opportunités"
-    ];
+    return JSON.parse(result.response.text()) as string[];
   } catch (error) {
-    console.error("Error generating objectives:", error);
-    return [
-        "Acquérir les compétences clés liées à la formation",
-        "Comprendre les enjeux théoriques et pratiques",
-        "Mettre en œuvre les stratégies apprises",
-        "Autonomie sur les outils présentés"
-    ];
+    console.error("Erreur Objectifs:", error);
+    return ["Comprendre les bases", "Pratiquer les concepts", "Appliquer en situation", "Évaluer les acquis"];
   }
 };
